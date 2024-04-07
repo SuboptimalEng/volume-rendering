@@ -15,22 +15,21 @@ export const ThreeScene = () => {
     t: clock.elapsedTime,
   };
 
-  // const [time, setTime] = useState(0);
-  // setTime(clock.elapsedTime);
-
-  // let camera: THREE.PerspectiveCamera | null = null;
+  const [time, setMyTime] = useState(0);
+  const [cameraPos, setCameraPos] = useState<any | null>(null);
 
   useEffect(() => {
     // Create a camera
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.z = 5;
+    const myCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    myCamera.position.z = 5;
+    setCameraPos(myCamera.position);
 
     // Create a renderer
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(myCamera, renderer.domElement);
 
     // Create a cube
     const geometry = new THREE.BoxGeometry();
@@ -38,6 +37,8 @@ export const ThreeScene = () => {
     const cube = new THREE.Mesh(geometry, material);
     cube.name = 'cube';
     scene.add(cube);
+
+    controls.addEventListener('change', () => setCameraPos(controls.position0));
 
     // Animate the scene
     const animate = () => {
@@ -52,7 +53,7 @@ export const ThreeScene = () => {
 
       obj.t = clock.getElapsedTime();
 
-      renderer.render(scene, camera);
+      renderer.render(scene, myCamera);
     };
 
     animate();
@@ -61,31 +62,10 @@ export const ThreeScene = () => {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
+      myCamera.aspect = width / height;
+      myCamera.updateProjectionMatrix();
       renderer.setSize(width, height);
     };
-
-    // let s = 256 * 256;
-    // const imageData = new Uint8Array(s);
-    // for (let i = 0; i < s; i++) {
-    //   imageData[i] = Math.floor(s * Math.random());
-    // }
-    // console.log(imageData);
-    // const txt = new THREE.DataTexture(imageData, 256, 256, THREE.RedFormat);
-    // txt.needsUpdate = true; // Set needsUpdate to true after updating texture data
-    // // Set texture parameters (adjust as needed)
-    // txt.minFilter = THREE.LinearFilter;
-    // txt.magFilter = THREE.LinearFilter;
-    // txt.wrapS = THREE.ClampToEdgeWrapping;
-    // txt.wrapT = THREE.ClampToEdgeWrapping;
-    // const geo = new THREE.PlaneGeometry(1, 1);
-    // const mat = new THREE.MeshBasicMaterial({
-    //   map: txt,
-    //   side: THREE.DoubleSide,
-    // });
-    // const mesh = new THREE.Mesh(geo, mat);
-    // scene.add(mesh);
 
     window.addEventListener('resize', handleResize);
 
@@ -174,6 +154,8 @@ export const ThreeScene = () => {
     volumeDataTexture.wrapR = THREE.ClampToEdgeWrapping;
     volumeDataTexture.needsUpdate = true;
 
+    console.log(cameraPos);
+
     const volumeShaderMaterial = new THREE.ShaderMaterial({
       uniforms: {
         volumeData: {
@@ -183,8 +165,8 @@ export const ThreeScene = () => {
           value: new THREE.Vector3(window.innerWidth, window.innerHeight, 1),
         },
         cameraPos: {
-          value: new THREE.Vector3(0, 0, 0),
-          // value: camera.position,
+          // value: new THREE.Vector3(0, 0, 0),
+          value: new THREE.Vector3(cameraPos.x, cameraPos.y, -cameraPos.z),
         },
         time: {
           value: obj.t,
@@ -195,8 +177,20 @@ export const ThreeScene = () => {
       // transparent: true,
       // opacity: 0.5,
       vertexShader: `
+uniform vec3 cameraPos;
+
+// varying vec3 cameraPos1;
+varying vec3 hitPos;
+
 void main() {
+    // cameraPos1 = cameraPos
+    // rayDir1 = cameraPos -
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+    vec3 volume_scale = vec3(1.0);
+    vec3 volume_translation = vec3(0.5) - volume_scale * 0.5;
+    vec3 transformed_eye = (cameraPos - volume_translation) / volume_scale;
+    hitPos = position - transformed_eye;
 }
       `,
       fragmentShader: `
@@ -209,6 +203,8 @@ uniform vec3 resolution;
 uniform vec3 cameraPos;
 uniform float time;
 
+varying vec3 hitPos;
+
 float sdSphere(vec3 p, float s) {
   return length(p) - s;
 }
@@ -218,47 +214,56 @@ float sdTorus(vec3 p, vec2 t) {
   return length(q)-t.y;
 }
 
-float map(vec3 p) {
-  return sdTorus(p, vec2(0.1, 0.05));
-  // return sdSphere(p, 0.1);
+float map(vec3 p, float time) {
+  return sdTorus(p, vec2(0.4, 0.05));
+  // return sdSphere(p, 0.25);
 }
 
 void main() {
     // vec3 rayOrigin = cameraPos;
-    vec3 rayOrigin = vec3(0.0, 0.0, -1.0);
     // vec3 rayDir = vec3(normalize(gl_FragCoord.xy / resolution.xy - 0.5), 1.0);
-    vec3 rayDir = normalize(gl_FragCoord.xyz / resolution.xyz - 0.5);
+    // vec3 rayDir = normalize(gl_FragCoord.xyz / resolution.xyz - 0.5);
 
-    float stepSize = 0.01; // Adjust step size based on your data
+    vec3 rayOrigin = vec3(0.0, 0.0, -3.0);
+    vec3 rayDir = normalize(vec3(2.0 * gl_FragCoord.xy / resolution.xy - 1.0, 1.0));
+    // vec3 rayDir = normalize(hitPos - rayOrigin);
+    // vec3 rayDir = normalize(rayOrigin);
+
     float totalDistance = 0.0;
-
-    // float alpha = 0.0;
-    // vec4 color = vec4(0.0, 0.0, 1.0, 1.0);
-
     for (int i = 0; i < 64; i++) {
       vec3 p = rayOrigin + rayDir * totalDistance;
-      float d = map(p);
+      float d = map(p, time);
       totalDistance += d;
       if (d < 0.001 || totalDistance > 100.0) {
         break;
       }
     }
 
+    // float td = 0.0;
+    // float alpha = 0.0;
+    // float stepSize = 0.1;
+    // vec4 color = vec4(0.0, 0.0, 1.0, 1.0);
     // for (int i = 0; i < 100; i++) { // Maximum iterations for ray marching
-    //     vec3 samplePos = rayOrigin + t * rayDir;
-    //     float sampleValue = texture(imageData, samplePos).r;
+    //     vec3 samplePos = rayOrigin + td * rayDir;
+    //     float sampleValue = texture(volumeData, samplePos).r;
     //     // Apply transfer function to map sample value to color and opacity
     //     vec4 sampleColor = vec4(sampleValue, sampleValue, sampleValue, 1.0); // Grayscale example
     //     float sampleAlpha = sampleValue; // Example: opacity based on sample value
-    //     // color.x += sampleValue;
-    //     // color.x += sampleValue;
-    //     // color = texture(imageData, vec3(0.5));
     //     color += sampleColor * (1.0 - alpha);
     //     alpha += sampleAlpha * (1.0 - alpha);
-    //     color.rgb += vec3(sampleValue, sampleValue, 0.0);
-    //     if (alpha >= 1.0 || t >= 1.0) break; // Exit loop if opacity reaches 1.0
-    //     totalDistance += stepSize;
+    //     // color.rgb += vec3(sampleValue, 0.01, 0.0);
+    //     // Exit loop if opacity reaches 1.0
+    //     if (alpha >= 1.0 || td >= 1.0) {
+    //       break;
+    //     }
+    //     td += stepSize;
     // }
+
+    vec2 uv = 8.0 * gl_FragCoord.xy / resolution.xy - 4.0;
+    gl_FragColor = vec4(1);
+    gl_FragColor = vec4(rayDir, 1.0);
+    gl_FragColor = vec4(vec3(totalDistance * 0.1), 1.0);
+    // gl_FragColor = vec4(uv, 0.0, 1.0);
 
     // divide by 255?
     // float v = texture(volumeData, vec3(0.5)).r;
@@ -266,10 +271,6 @@ void main() {
 
     // float val = texture(volumeData, vec3(0.25)).r;
     // gl_FragColor = vec4(val, 0.0, 0.0, 1.0);
-
-    gl_FragColor = vec4(1);
-    gl_FragColor = vec4(rayDir, 1.0);
-    gl_FragColor = vec4(vec3(totalDistance * 0.1), 1.0);
 }
       `,
     });
@@ -315,7 +316,7 @@ void main() {
     scene.add(cube);
 
     return () => {};
-  }, [volumeData]);
+  }, [volumeData, cameraPos]);
 
   return (
     <>
