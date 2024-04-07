@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
+import * as Three from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 // import data from '../public/foot_256x256x256_uint8.raw';
 
-export const ThreeScene = () => {
+export const ThreeSceneV1 = () => {
   const canvasRef = useRef(null);
-  const scene = new THREE.Scene();
+  const scene = new Three.Scene();
 
   // const [t, setT] = useRef(null)
-  const clock = new THREE.Clock();
+  const clock = new Three.Clock();
   clock.start();
 
   let obj = {
@@ -22,19 +22,19 @@ export const ThreeScene = () => {
     // Create a camera
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const myCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const myCamera = new Three.PerspectiveCamera(75, width / height, 0.1, 1000);
     myCamera.position.z = 5;
     setCameraPos(myCamera.position);
 
     // Create a renderer
-    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
+    const renderer = new Three.WebGLRenderer({ canvas: canvasRef.current });
     renderer.setSize(window.innerWidth, window.innerHeight);
     const controls = new OrbitControls(myCamera, renderer.domElement);
 
     // Create a cube
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
+    const geometry = new Three.BoxGeometry();
+    const material = new Three.MeshBasicMaterial({ color: 0x00ff00 });
+    const cube = new Three.Mesh(geometry, material);
     cube.name = 'cube';
     scene.add(cube);
 
@@ -138,35 +138,35 @@ export const ThreeScene = () => {
 
     // console.log('hello there!!!', volumeData);
     const dim = 256;
-    const volumeDataTexture = new THREE.Data3DTexture(
+    const volumeDataTexture = new Three.Data3DTexture(
       volumeData,
       dim,
       dim,
       dim
     );
     // volumeDataTexture.format = THREE.RGBFormat; // Adjust format based on your data type
-    volumeDataTexture.format = THREE.RedFormat; // Adjust format based on your data type
-    volumeDataTexture.minFilter = THREE.LinearFilter; // Adjust filtering as needed
-    volumeDataTexture.magFilter = THREE.LinearFilter;
+    volumeDataTexture.format = Three.RedFormat; // Adjust format based on your data type
+    volumeDataTexture.minFilter = Three.LinearFilter; // Adjust filtering as needed
+    volumeDataTexture.magFilter = Three.LinearFilter;
     // volumeDataTexture.type = THREE.; // Adjust type based on your data precision
-    volumeDataTexture.wrapS = THREE.ClampToEdgeWrapping; // Adjust wrapping as needed
-    volumeDataTexture.wrapT = THREE.ClampToEdgeWrapping;
-    volumeDataTexture.wrapR = THREE.ClampToEdgeWrapping;
+    volumeDataTexture.wrapS = Three.ClampToEdgeWrapping; // Adjust wrapping as needed
+    volumeDataTexture.wrapT = Three.ClampToEdgeWrapping;
+    volumeDataTexture.wrapR = Three.ClampToEdgeWrapping;
     volumeDataTexture.needsUpdate = true;
 
     console.log(cameraPos);
 
-    const volumeShaderMaterial = new THREE.ShaderMaterial({
+    const volumeShaderMaterial = new Three.ShaderMaterial({
       uniforms: {
         volumeData: {
           value: volumeDataTexture,
         },
         resolution: {
-          value: new THREE.Vector3(window.innerWidth, window.innerHeight, 1),
+          value: new Three.Vector3(window.innerWidth, window.innerHeight, 1),
         },
         cameraPos: {
           // value: new THREE.Vector3(0, 0, 0),
-          value: new THREE.Vector3(cameraPos.x, cameraPos.y, -cameraPos.z),
+          value: new Three.Vector3(cameraPos.x, cameraPos.y, -cameraPos.z),
         },
         time: {
           value: obj.t,
@@ -276,41 +276,41 @@ void main() {
     });
 
     // const volumeGeometry = new THREE.PlaneGeometry(1.5, 1.5);
-    const volumeGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-    const volumeMesh = new THREE.Mesh(volumeGeometry, volumeShaderMaterial);
+    const volumeGeometry = new Three.BoxGeometry(1.5, 1.5, 1.5);
+    const volumeMesh = new Three.Mesh(volumeGeometry, volumeShaderMaterial);
     volumeMesh.name = '3d texture';
     scene.add(volumeMesh);
     // debugger;
 
-    const imageDataTexture = new THREE.DataTexture(
+    const imageDataTexture = new Three.DataTexture(
       imageData,
       256,
       256,
-      THREE.RedFormat
+      Three.RedFormat
     );
     imageDataTexture.needsUpdate = true; // Set needsUpdate to true after updating texture data
-    imageDataTexture.minFilter = THREE.LinearFilter;
-    imageDataTexture.magFilter = THREE.LinearFilter;
-    imageDataTexture.wrapS = THREE.ClampToEdgeWrapping;
-    imageDataTexture.wrapT = THREE.ClampToEdgeWrapping;
-    const geo1 = new THREE.BoxGeometry(1, 1, 1);
-    const mat1 = new THREE.MeshBasicMaterial({
+    imageDataTexture.minFilter = Three.LinearFilter;
+    imageDataTexture.magFilter = Three.LinearFilter;
+    imageDataTexture.wrapS = Three.ClampToEdgeWrapping;
+    imageDataTexture.wrapT = Three.ClampToEdgeWrapping;
+    const geo1 = new Three.BoxGeometry(1, 1, 1);
+    const mat1 = new Three.MeshBasicMaterial({
       map: imageDataTexture,
-      side: THREE.DoubleSide,
+      side: Three.DoubleSide,
     });
-    const mesh = new THREE.Mesh(geo1, mat1);
+    const mesh = new Three.Mesh(geo1, mat1);
     mesh.position.y = 2;
     scene.add(mesh);
 
-    const geometry2 = new THREE.BoxGeometry();
-    const material2 = new THREE.ShaderMaterial({
+    const geometry2 = new Three.BoxGeometry();
+    const material2 = new Three.ShaderMaterial({
       fragmentShader: `
 void main() {
     gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
 }
       `,
     });
-    const cube = new THREE.Mesh(geometry2, material2);
+    const cube = new Three.Mesh(geometry2, material2);
     cube.position.x = -2;
     cube.name = 'cube 2';
     scene.add(cube);
