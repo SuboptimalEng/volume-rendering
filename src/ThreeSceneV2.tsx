@@ -46,12 +46,6 @@ export const ThreeSceneV2 = () => {
     const mat1 = new Three.ShaderMaterial({
       uniforms: {
         u_camera: {
-          // value: new Three.Vector3(
-          //   uniformData.cameraPos.x,
-          //   uniformData.cameraPos.y,
-          //   uniformData.cameraPos.z
-          // ),
-          // value: new Three.Vector3(0, 0, -2.5),
           value: myCamera.position,
         },
         u_resolution: {
@@ -59,11 +53,31 @@ export const ThreeSceneV2 = () => {
         },
       },
       vertexShader: `
-      varying vec3 v_hitPos;
+      uniform vec3 u_camera; // default in world space
+      uniform vec3 u_resolution;
+
+      // The Art of Code: https://www.youtube.com/watch?v=S8AWd66hoCo
+      // It is important to keep camera + (vertex) position in same space.
+      // We can either move (vertex) position to world space, or the camera
+      // to object space. In this example, we transform camera to object
+      // space and use that as the rayOrigin in the fragment shader.
+
+      varying vec3 v_hitPos; // default in object space
+      varying vec3 v_hitPosWorldSpace;
+      varying vec3 v_cameraObjectSpace;
 
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        v_hitPos = position;
+
+        v_hitPos = position.xyz;
+
+        // In this case, we move the (vertex) position to world space.
+        // Notice we multiply by modelMatrix, not modelViewMatrix.
+        v_hitPosWorldSpace = (modelMatrix * vec4(position, 1.0)).xyz;
+
+        // In this case, we move the camera to object space.
+        // Notice we use inverse(modelMatrix) + put camera in homogeneous coords.
+        v_cameraObjectSpace = (inverse(modelMatrix) * vec4(u_camera, 1.0)).xyz;
       }
       `,
       fragmentShader: `
@@ -71,6 +85,8 @@ export const ThreeSceneV2 = () => {
       uniform vec3 u_resolution;
 
       varying vec3 v_hitPos;
+      varying vec3 v_hitPosWorldSpace;
+      varying vec3 v_cameraObjectSpace;
 
       float sdCircle(vec3 p, float r) {
         return length(p) - r;
@@ -88,12 +104,14 @@ export const ThreeSceneV2 = () => {
 
       void main() {
         vec3 rayOrigin = vec3(0.0, 0.0, -3.0);
-        rayOrigin = u_camera;
+        // rayOrigin = u_camera;
+        rayOrigin = v_cameraObjectSpace;
 
         vec2 uv = 2.0 * gl_FragCoord.xy / u_resolution.xy - 1.0;
         vec3 rayDir = normalize(vec3(uv, 1.0));
         // rayDir = normalize(vec3(uv, 1.0) - rayOrigin);
         rayDir = normalize(v_hitPos - rayOrigin);
+        // rayDir = normalize(v_hitPosWorldSpace - rayOrigin);
 
         float totalDistance = 0.0;
         for (int i = 0; i < 32; i++) {
@@ -115,6 +133,8 @@ export const ThreeSceneV2 = () => {
       `,
     });
     const m1 = new Three.Mesh(geo1, mat1);
+    // Changing this position will change world space coords of the mesh.
+    // m1.position.x = 0;
     scene.add(m1);
 
     const controls = new OrbitControls(myCamera, renderer.domElement);
