@@ -59,13 +59,18 @@ export const ThreeSceneV2 = () => {
         },
       },
       vertexShader: `
+      varying vec3 v_hitPos;
+
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        v_hitPos = position;
       }
       `,
       fragmentShader: `
       uniform vec3 u_camera;
       uniform vec3 u_resolution;
+
+      varying vec3 v_hitPos;
 
       float sdCircle(vec3 p, float r) {
         return length(p) - r;
@@ -78,7 +83,7 @@ export const ThreeSceneV2 = () => {
 
       float map(vec3 p) {
         // return sdCircle(p, 0.5);
-        return sdTorus(p, vec2(0.5, 0.1));
+        return sdTorus(p, vec2(0.5, 0.2));
       }
 
       void main() {
@@ -87,6 +92,8 @@ export const ThreeSceneV2 = () => {
 
         vec2 uv = 2.0 * gl_FragCoord.xy / u_resolution.xy - 1.0;
         vec3 rayDir = normalize(vec3(uv, 1.0));
+        // rayDir = normalize(vec3(uv, 1.0) - rayOrigin);
+        rayDir = normalize(v_hitPos - rayOrigin);
 
         float totalDistance = 0.0;
         for (int i = 0; i < 32; i++) {
