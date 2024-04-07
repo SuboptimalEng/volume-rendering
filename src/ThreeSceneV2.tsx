@@ -114,6 +114,8 @@ export const ThreeSceneV2 = () => {
         // rayDir = normalize(v_hitPosWorldSpace - rayOrigin);
 
         float totalDistance = 0.0;
+        bool discardCheck = true;
+
         for (int i = 0; i < 32; i++) {
           vec3 p = rayOrigin + rayDir * totalDistance;
 
@@ -121,9 +123,21 @@ export const ThreeSceneV2 = () => {
 
           totalDistance += d;
 
-          if (d < 0.001 || totalDistance >= 100.0) {
+          if (d < 0.001) {
+            discardCheck = false;
             break;
           }
+
+          if (totalDistance >= 100.0) {
+            // If you want to truly discard, set discardCheck to true here.
+            // discardCheck = true;
+            discardCheck = false;
+            break;
+          }
+        }
+
+        if (discardCheck) {
+          discard;
         }
 
         gl_FragColor = vec4(1.0);
@@ -134,7 +148,11 @@ export const ThreeSceneV2 = () => {
     });
     const m1 = new Three.Mesh(geo1, mat1);
     // Changing this position will change world space coords of the mesh.
-    // m1.position.x = 0;
+    // Since transform camera coordinates to object space, this will
+    // also work on the ray march. Same for rotataion + scale.
+    // m1.position.x = 2;
+    // m1.rotation.x = 10;
+    // m1.scale.x = 2;
     scene.add(m1);
 
     const controls = new OrbitControls(myCamera, renderer.domElement);
