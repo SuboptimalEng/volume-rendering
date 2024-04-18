@@ -13,10 +13,16 @@ import { GUI } from 'dat.gui';
 // };
 
 const stats = new Stats();
+const clock = new Three.Clock();
 document.body.appendChild(stats.dom);
 
 const uniforms = {
-  dt: 0.01,
+  u_dt: {
+    value: 0.01,
+  },
+  u_time: {
+    value: 0.0,
+  },
 };
 const gui = new GUI();
 const cubeFolder = gui.addFolder('Cross Section Size');
@@ -89,8 +95,10 @@ export const ThreeSceneV3 = () => {
     cubeFolder.add(crossSectionSize, 'y', 0, 0.5);
     cubeFolder.add(crossSectionSize, 'z', 0, 0.5);
     cubeFolder.add(crossSectionSize, 'z', 0, 0.5);
-    cubeFolder.add(uniforms, 'dt', 0.0, 0.02, 0.002);
-    cubeFolder.open();
+    cubeFolder.add(uniforms.u_dt, 'value', 0.002, 0.02, 0.002);
+    // cubeFolder.open();
+
+    clock.start();
 
     const scene = new Three.Scene();
     // const cube1 = generateCube(new Three.Vector3(-2, 0, 0));
@@ -101,6 +109,7 @@ export const ThreeSceneV3 = () => {
     // const geo1 = new Three.PlaneGeometry(2, 2, 2);
     console.log('rendering!!!');
     const geo1 = new Three.BoxGeometry(2, 2, 2);
+    console.log();
     const mat1 = new Three.ShaderMaterial({
       uniforms: {
         u_camera: {
@@ -115,13 +124,12 @@ export const ThreeSceneV3 = () => {
         u_crossSectionSize: {
           value: crossSectionSize,
         },
-        u_dt: {
-          value: uniforms.dt,
-        },
+        ...uniforms,
       },
       vertexShader: `
       uniform vec3 u_camera; // default in world space
       uniform vec3 u_resolution;
+      uniform float u_time;
 
       // The Art of Code: https://www.youtube.com/watch?v=S8AWd66hoCo
       // It is important to keep camera + (vertex) position in same space.
@@ -134,7 +142,9 @@ export const ThreeSceneV3 = () => {
       varying vec3 v_cameraObjectSpace;
 
       void main() {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vec3 pos = position;
+        // pos.y = pos.y + sin(u_time);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 
         v_hitPos = position.xyz;
 
@@ -158,6 +168,7 @@ export const ThreeSceneV3 = () => {
       uniform mediump sampler3D u_volume;
       uniform vec3 u_crossSectionSize;
       uniform float u_dt;
+      uniform float u_time;
 
       vec3 palette(in float t) {
         // vec3 a = vec3(0.5, 0.5, 0.5);
@@ -233,8 +244,8 @@ export const ThreeSceneV3 = () => {
         // Step 3: Compute the step size to march through the volume grid
         vec3 dt_vec = 1.0 / (vec3(20.0) * abs(rayDir));
         // float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));
-        float dt = 0.002;
-        // float dt = u_dt;
+        // float dt = 0.002;
+        float dt = u_dt;
 
         vec4 color = vec4(0.0);
         vec4 c = vec4(0.0);
@@ -252,7 +263,7 @@ export const ThreeSceneV3 = () => {
           // vec4 val_color = vec4(texture(transfer_fcn, vec2(val, 0.5)).rgb, val);
           // vec4 val_color = vec4(1.0, 0.0, 0.0, val * 0.2);
           // vec4 val_color = vec4(1.0, 1.0, 1.0, val * 0.1);
-          vec4 val_color = vec4(palette(val), val * 0.1);
+          vec4 val_color = vec4(palette(val + sin(u_time)), val * 0.1);
 
           // val_color = vec4(1.0, 0.0, 0.0, val);
           // c.r += val;
@@ -326,6 +337,8 @@ export const ThreeSceneV3 = () => {
       // uniformData.cameraPos = myCamera.position;
       // console.log(uniformData.cameraPos);
       stats.update();
+
+      uniforms.u_time.value = clock.getElapsedTime();
 
       requestAnimationFrame(animate);
     };
