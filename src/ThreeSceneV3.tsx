@@ -265,45 +265,6 @@ export const ThreeSceneV3 = () => {
 
         gl_FragColor = color;
       }
-
-      // Note: Figure out how to ray march inside a cube mesh.
-      // float sdCircle(vec3 p, float r) {
-      //   return length(p) - r;
-      // }
-      // float sdTorus(vec3 p, vec2 t) {
-      //   vec2 q = vec2(length(p.xz)-t.x,p.y);
-      //   return length(q)-t.y;
-      // }
-      // float map(vec3 p) {
-      //   // return sdCircle(p, 0.5);
-      //   return sdTorus(p, vec2(0.5, 0.2));
-      // }
-      // void main() {
-      //   float totalDistance = 0.0;
-      //   bool discardCheck = true;
-      //   for (int i = 0; i < 32; i++) {
-      //     vec3 p = rayOrigin + rayDir * totalDistance;
-      //     float d = map(p);
-      //     totalDistance += d;
-      //     if (d < 0.001) {
-      //       discardCheck = false;
-      //       break;
-      //     }
-      //     if (totalDistance >= 100.0) {
-      //       // If you want to truly discard, set discardCheck to true here.
-      //       // discardCheck = true;
-      //       discardCheck = false;
-      //       break;
-      //     }
-      //   }
-      //   // if (discardCheck) {
-      //   //   discard;
-      //   // }
-      //   gl_FragColor = vec4(1.0);
-      //   gl_FragColor.xyz = rayDir;
-      //   gl_FragColor.xyz = vec3(totalDistance * 0.1);
-      //   gl_FragColor.xyz = vec3(valueColor * 0.5);
-      // }
       `,
     });
     const m1 = new Three.Mesh(geo1, mat1);
