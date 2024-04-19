@@ -5,9 +5,6 @@ import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'dat.gui';
 
 const handleVolumeFileUpload = (event: any, dim: number, setDataFn: any) => {
-  // Foot Model - https://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw
-  const footUrl =
-    'https://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw';
   const file = event.target.files[0];
   const reader = new FileReader();
   reader.onload = (e: any) => {
