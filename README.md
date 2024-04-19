@@ -1,32 +1,35 @@
-# xray-vision
+# 🌊 Volume Rendering
 
-# React + TypeScript + Vite
+## Description
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Volume rendering is a common technique used to render 3D medical imaging data such as MRIs or CT scans. This data is
+usually stored in 3D textures. This repo contains my implementation of it in Three.js and React. Huge thanks to [Will
+Usher's blog post](https://www.willusher.io/webgl/2019/01/13/volume-rendering-with-webgl) on this very technique.
 
-Currently, two official plugins are available:
+## Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Setup
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-};
+```
+git clone https://github.com/SuboptimalEng/volume-rendering.git
+cd volume-rendering/
+npm install
+npm run dev
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+But wait, there's more! After running this command, you will be able to open the project in localhost. However, there will be
+no image rendered on screen! This is because, I did not want to upload 16MB raw files to this repo. Here are.
+
+- Skull - https://klacansky.com/open-scivis-datasets/skull/skull_256x256x256_uint8.raw
+- Bonsai - https://klacansky.com/open-scivis-datasets/bonsai/bonsai_256x256x256_uint8.raw
+- Foot Model - https://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw
+
+The website I linked has tons of other models, but not all of them will work. I've hard-coded this project to work with `256x256x256
+uint8` files that are scaled `1x1x1`.
+
+## References
+
+- Will Usher - https://www.willusher.io/webgl/2019/01/13/volume-rendering-with-webgl
+- Open Scientific Visualization Datasets - https://klacansky.com/open-scivis-datasets
+- The Art of Code - https://www.youtube.com/watch?v=S8AWd66hoCo
+- Inigo Quilez - https://iquilezles.org/articles/palettes/

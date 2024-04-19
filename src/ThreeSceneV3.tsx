@@ -4,125 +4,126 @@ import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'dat.gui';
 
-// const generateCube = (p: Three.Vector3 = new Three.Vector3(0, 0, 0)) => {
-//   const geo1 = new Three.BoxGeometry(1, 1, 1);
-//   const mat1 = new Three.MeshBasicMaterial({ color: 0x00ff00 });
-//   const cube = new Three.Mesh(geo1, mat1);
-//   cube.position.set(p.x, p.y, p.z);
-//   return cube;
-// };
-
-const stats = new Stats();
-const clock = new Three.Clock();
-document.body.appendChild(stats.dom);
-
-const uniforms = {
-  u_dt: {
-    value: 0.01,
-  },
-  u_time: {
-    value: 0.0,
-  },
+const handleVolumeFileUpload = (event: any, dim: number, setDataFn: any) => {
+  // Foot Model - https://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw
+  const footUrl =
+    'https://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw';
+  const file = event.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (e: any) => {
+    const arrayBuffer = e.target.result;
+    const uint8Array = new Uint8Array(arrayBuffer);
+    // Assuming the raw file contains 256x256x256 uint8 values
+    const data = new Uint8Array(dim * dim * dim);
+    for (let i = 0; i < uint8Array.length; i++) {
+      data[i] = uint8Array[i];
+    }
+    setDataFn(data);
+  };
+  reader.readAsArrayBuffer(file);
 };
-const gui = new GUI();
-const cubeFolder = gui.addFolder('Cross Section Size');
+
+const initData = (canvasRef: any) => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  const camera = new Three.PerspectiveCamera(75, width / height, 0.1, 1000);
+  camera.position.set(0, 0, -2);
+  camera.lookAt(new Three.Vector3(0, 0, 0));
+  camera.up.set(0, 1, 0);
+
+  const renderer = new Three.WebGLRenderer({ canvas: canvasRef.current });
+  const scene = new Three.Scene();
+  const stats = new Stats();
+  const clock = new Three.Clock();
+  const controls = new OrbitControls(camera, renderer.domElement);
+
+  renderer.setSize(width, height);
+  clock.start();
+  document.body.appendChild(stats.dom);
+
+  const gui = new GUI();
+  const crossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
+  const folder = gui.addFolder('Cross Section Size');
+  folder.add(crossSectionSize, 'x', 0, 0.5);
+  folder.add(crossSectionSize, 'y', 0, 0.5);
+  folder.add(crossSectionSize, 'z', 0, 0.5);
+
+  const uniforms = {
+    u_camera: {
+      value: camera.position,
+    },
+    u_resolution: {
+      value: new Three.Vector3(width, height, 1),
+    },
+    u_dt: {
+      value: 0.01,
+    },
+    u_time: {
+      value: 0.0,
+    },
+    u_crossSectionSize: {
+      value: crossSectionSize,
+    },
+  };
+
+  folder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002);
+  folder.open();
+
+  return {
+    camera,
+    stats,
+    clock,
+    uniforms,
+    gui,
+    renderer,
+    scene,
+    controls,
+  };
+};
 
 export const ThreeSceneV3 = () => {
   const dim = 256;
   const canvasRef = useRef(null);
-  let myCamera: Three.PerspectiveCamera;
-  let crossSectionSize: Three.Vector3;
-  let volumeDataTexture: Three.Data3DTexture;
-
   const [volumeData, setVolumeData] = useState<Uint8Array | null>(null);
-  const handleVolumeFileUpload = (event: any) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      const arrayBuffer = e.target.result;
-      const uint8Array = new Uint8Array(arrayBuffer);
-      // Assuming the raw file contains 256x256x256 uint8 values
-      const data = new Uint8Array(256 * 256 * 256);
-      // const data = new Uint8Array(256 * 256 * 256);
-      for (let i = 0; i < uint8Array.length; i++) {
-        data[i] = uint8Array[i];
-      }
-      setVolumeData(data);
-      // console.log(data);
-    };
-    reader.readAsArrayBuffer(file);
-  };
 
   useEffect(() => {
     if (canvasRef.current === null) {
+      console.log('No canvas!');
       return;
     }
 
-    // if (volumeData === null) {
-    //   console.log('no volume data');
-    //   return;
-    // }
-
-    // console.log('hello there!!!', volumeData);
-    if (volumeData) {
-      volumeDataTexture = new Three.Data3DTexture(volumeData, dim, dim, dim);
-      volumeDataTexture.format = Three.RedFormat; // Adjust format based on your data type
-      // volumeDataTexture.type = Three.UnsignedByteType;
-      volumeDataTexture.minFilter = Three.LinearFilter; // Adjust filtering as needed
-      volumeDataTexture.magFilter = Three.LinearFilter;
-      // volumeDataTexture.wrapS = Three.RepeatWrapping; // Adjust wrapping as needed
-      volumeDataTexture.wrapT = Three.RepeatWrapping;
-      // volumeDataTexture.wrapR = Three.RepeatWrapping;
-      volumeDataTexture.needsUpdate = true;
-
-      console.log(volumeDataTexture);
-    } else {
+    if (volumeData === null) {
+      console.log('No volume data!');
       return;
     }
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const renderer = new Three.WebGLRenderer({ canvas: canvasRef.current });
-    renderer.setSize(width, height);
+    const volumeDataTexture = new Three.Data3DTexture(
+      volumeData,
+      dim,
+      dim,
+      dim,
+    );
+    volumeDataTexture.format = Three.RedFormat;
+    // volumeDataTexture.type = Three.UnsignedByteType;
+    volumeDataTexture.minFilter = Three.LinearFilter;
+    volumeDataTexture.magFilter = Three.LinearFilter;
+    // volumeDataTexture.wrapS = Three.RepeatWrapping;
+    volumeDataTexture.wrapT = Three.RepeatWrapping;
+    // volumeDataTexture.wrapR = Three.RepeatWrapping;
+    volumeDataTexture.needsUpdate = true;
+    console.log(volumeDataTexture);
 
-    myCamera = new Three.PerspectiveCamera(75, width / height, 0.1, 1000);
-    myCamera.position.set(0, 0, -2);
-    myCamera.lookAt(new Three.Vector3(0, 0, 0));
-    myCamera.up.set(0, 1, 0);
+    const { camera, stats, clock, uniforms, gui, renderer, scene, controls } =
+      initData(canvasRef); // TODO: I should clean this up...
 
-    crossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
-    cubeFolder.add(crossSectionSize, 'x', 0, 0.5);
-    cubeFolder.add(crossSectionSize, 'y', 0, 0.5);
-    cubeFolder.add(crossSectionSize, 'z', 0, 0.5);
-    cubeFolder.add(crossSectionSize, 'z', 0, 0.5);
-    cubeFolder.add(uniforms.u_dt, 'value', 0.002, 0.02, 0.002);
-    // cubeFolder.open();
-
-    clock.start();
-
-    const scene = new Three.Scene();
-    // const cube1 = generateCube(new Three.Vector3(-2, 0, 0));
-    // const cube2 = generateCube(new Three.Vector3(2, 0, 0));
-    // scene.add(cube1);
-    // scene.add(cube2);
-
+    // Note: Plane works, but looks very weird...
     // const geo1 = new Three.PlaneGeometry(2, 2, 2);
-    console.log('rendering!!!');
     const geo1 = new Three.BoxGeometry(2, 2, 2);
-    console.log();
     const mat1 = new Three.ShaderMaterial({
       uniforms: {
-        u_camera: {
-          value: myCamera.position,
-        },
-        u_resolution: {
-          value: new Three.Vector3(width, height, 1),
-        },
         u_volume: {
           value: volumeDataTexture,
-        },
-        u_crossSectionSize: {
-          value: crossSectionSize,
         },
         ...uniforms,
       },
@@ -131,7 +132,7 @@ export const ThreeSceneV3 = () => {
       uniform vec3 u_resolution;
       uniform float u_time;
 
-      // The Art of Code: https://www.youtube.com/watch?v=S8AWd66hoCo
+      // The Art of Code - https://www.youtube.com/watch?v=S8AWd66hoCo
       // It is important to keep camera + (vertex) position in same space.
       // We can either move (vertex) position to world space, or the camera
       // to object space. In this example, we transform camera to object
@@ -161,8 +162,6 @@ export const ThreeSceneV3 = () => {
       precision mediump int;
       precision mediump float;
 
-
-
       uniform vec3 u_camera;
       uniform vec3 u_resolution;
       uniform mediump sampler3D u_volume;
@@ -170,6 +169,7 @@ export const ThreeSceneV3 = () => {
       uniform float u_dt;
       uniform float u_time;
 
+      // Inigo Quilez - https://iquilezles.org/articles/palettes/
       vec3 palette(in float t) {
         // vec3 a = vec3(0.5, 0.5, 0.5);
         // vec3 b = vec3(0.5, 0.5, 0.5);
@@ -188,20 +188,7 @@ export const ThreeSceneV3 = () => {
       varying vec3 v_hitPosWorldSpace;
       varying vec3 v_cameraObjectSpace;
 
-      float sdCircle(vec3 p, float r) {
-        return length(p) - r;
-      }
-
-      float sdTorus(vec3 p, vec2 t) {
-        vec2 q = vec2(length(p.xz)-t.x,p.y);
-        return length(q)-t.y;
-      }
-
-      float map(vec3 p) {
-        // return sdCircle(p, 0.5);
-        return sdTorus(p, vec2(0.5, 0.2));
-      }
-
+      // Will Usher - https://www.willusher.io/webgl/2019/01/13/volume-rendering-with-webgl
       vec2 intersect_box(vec3 orig, vec3 dir) {
         // const float halfBoxSize = 0.5;
         // const vec3 box_min = vec3(-halfBoxSize);
@@ -236,6 +223,7 @@ export const ThreeSceneV3 = () => {
         if (t_hit.x > t_hit.y) {
           discard;
         }
+
         // We don't want to sample voxels behind the eye if it's
         // inside the volume, so keep the starting point at or in front
         // of the eye
@@ -250,20 +238,17 @@ export const ThreeSceneV3 = () => {
         vec4 color = vec4(0.0);
         vec4 c = vec4(0.0);
 
-        // Step 4: Starting from the entry point, march the ray through the volume
-        // and sample it
+        // TODO: Add blinn-phong lighting?
+        // vec3 lightSource = vec3(1.0, 1.0, 1.0);
+
         vec3 p = rayOrigin + t_hit.x * rayDir;
         for (float t = t_hit.x; t < t_hit.y; t += dt) {
-          // Step 4.1: Sample the volume, and color it by the transfer function.
-          // Note that here we don't use the opacity from the transfer function,
-          // and just use the sample value as the opacity
           // float val = texture(u_volume, vec3(0.4, 0.2, 0.4)).r;
           float val = texture(u_volume, p + 0.5).r;
 
-          // vec4 val_color = vec4(texture(transfer_fcn, vec2(val, 0.5)).rgb, val);
-          // vec4 val_color = vec4(1.0, 0.0, 0.0, val * 0.2);
           // vec4 val_color = vec4(1.0, 1.0, 1.0, val * 0.1);
-          vec4 val_color = vec4(palette(val + sin(u_time)), val * 0.1);
+          vec4 val_color = vec4(palette(val), val * 0.1);
+          // vec4 val_color = vec4(palette(val + sin(u_time)), val * 0.1);
 
           // val_color = vec4(1.0, 0.0, 0.0, val);
           // c.r += val;
@@ -281,42 +266,47 @@ export const ThreeSceneV3 = () => {
           p += rayDir * dt;
         }
 
-
         gl_FragColor = color;
-        // gl_FragColor.r = c.r;
-
-        // float totalDistance = 0.0;
-        // bool discardCheck = true;
-
-        // for (int i = 0; i < 32; i++) {
-        //   vec3 p = rayOrigin + rayDir * totalDistance;
-
-        //   float d = map(p);
-
-        //   totalDistance += d;
-
-        //   if (d < 0.001) {
-        //     discardCheck = false;
-        //     break;
-        //   }
-
-        //   if (totalDistance >= 100.0) {
-        //     // If you want to truly discard, set discardCheck to true here.
-        //     // discardCheck = true;
-        //     discardCheck = false;
-        //     break;
-        //   }
-        // }
-
-        // // if (discardCheck) {
-        // //   discard;
-        // // }
-
-        // gl_FragColor = vec4(1.0);
-        // gl_FragColor.xyz = rayDir;
-        // gl_FragColor.xyz = vec3(totalDistance * 0.1);
-        // gl_FragColor.xyz = vec3(valueColor * 0.5);
       }
+
+      // Note: Figure out how to ray march inside a cube mesh.
+      // float sdCircle(vec3 p, float r) {
+      //   return length(p) - r;
+      // }
+      // float sdTorus(vec3 p, vec2 t) {
+      //   vec2 q = vec2(length(p.xz)-t.x,p.y);
+      //   return length(q)-t.y;
+      // }
+      // float map(vec3 p) {
+      //   // return sdCircle(p, 0.5);
+      //   return sdTorus(p, vec2(0.5, 0.2));
+      // }
+      // void main() {
+      //   float totalDistance = 0.0;
+      //   bool discardCheck = true;
+      //   for (int i = 0; i < 32; i++) {
+      //     vec3 p = rayOrigin + rayDir * totalDistance;
+      //     float d = map(p);
+      //     totalDistance += d;
+      //     if (d < 0.001) {
+      //       discardCheck = false;
+      //       break;
+      //     }
+      //     if (totalDistance >= 100.0) {
+      //       // If you want to truly discard, set discardCheck to true here.
+      //       // discardCheck = true;
+      //       discardCheck = false;
+      //       break;
+      //     }
+      //   }
+      //   // if (discardCheck) {
+      //   //   discard;
+      //   // }
+      //   gl_FragColor = vec4(1.0);
+      //   gl_FragColor.xyz = rayDir;
+      //   gl_FragColor.xyz = vec3(totalDistance * 0.1);
+      //   gl_FragColor.xyz = vec3(valueColor * 0.5);
+      // }
       `,
     });
     const m1 = new Three.Mesh(geo1, mat1);
@@ -328,26 +318,27 @@ export const ThreeSceneV3 = () => {
     // m1.scale.x = 2;
     scene.add(m1);
 
-    const controls = new OrbitControls(myCamera, renderer.domElement);
-
     const animate = () => {
       controls.update();
-      renderer.render(scene, myCamera);
-
-      // uniformData.cameraPos = myCamera.position;
-      // console.log(uniformData.cameraPos);
       stats.update();
-
+      renderer.render(scene, camera);
       uniforms.u_time.value = clock.getElapsedTime();
-
       requestAnimationFrame(animate);
     };
+
     animate();
+
+    return () => {
+      gui.destroy();
+    };
   }, [volumeData]);
 
   return (
     <>
-      <input type="file" onChange={handleVolumeFileUpload} />
+      <input
+        type="file"
+        onChange={(e) => handleVolumeFileUpload(e, dim, setVolumeData)}
+      />
       <canvas ref={canvasRef}></canvas>
     </>
   );
