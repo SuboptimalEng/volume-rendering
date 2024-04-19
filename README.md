@@ -25,7 +25,7 @@ Note: The website I linked has tons of models, but not all of them will work. I'
 
 ## References
 
-- Will Usher - https://www.willusher.io/webgl/2019/01/13/volume-rendering-with-webgl
+- Will Usher' Blog Post - https://www.willusher.io/webgl/2019/01/13/volume-rendering-with-webgl
 - Open Scientific Visualization Datasets - https://klacansky.com/open-scivis-datasets
 - The Art of Code - https://www.youtube.com/watch?v=S8AWd66hoCo
 - Inigo Quilez - https://iquilezles.org/articles/palettes/
