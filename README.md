@@ -1,7 +1,5 @@
 # 🌊 Volume Rendering
 
-## Description
-
 Volume rendering is a common technique used to render 3D medical imaging data such as MRIs or CT scans. This repo contains my implementation of the algorithm in Three.js, GLSL, and React.
 
 <img src="/_demos/foot-01.png" width="100%">
