@@ -66,24 +66,26 @@ void main() {
   t_hit.x = max(t_hit.x, 0.0);
 
   // Step 3: Compute the step size to march through the volume grid
-  vec3 dt_vec = 1.0 / (vec3(20.0) * abs(rayDir));
+  // vec3 dt_vec = 1.0 / (vec3(20.0) * abs(rayDir));
+
   // float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));
   // float dt = 0.002;
   float dt = u_dt;
 
   vec4 color = vec4(0.0);
-  vec4 c = vec4(0.0);
 
   // note: 0.5 offset centers on cube
   vec3 p = rayOrigin + t_hit.x * rayDir + 0.5;
   for (float t = t_hit.x; t < t_hit.y; t += dt) {
-    // float val = texture(u_volume, vec3(0.4, 0.2, 0.4)).r;
-    // note: 0.5 offset centers on cube
+    // note: used this for testing purposes
+    // float textureVal = texture(u_volume, vec3(0.4, 0.2, 0.4)).r;
+
     float textureVal = texture(u_volume, p).r;
 
     vec4 val_color = vec4(0.0);
     float val_color_alpha = textureVal * 0.1;
-    // looks nicer with this alpha
+
+    // looks a little nicer when using this alpha
     val_color_alpha = smoothstep(0.0, 0.25, textureVal * 0.1);
 
     if (abs(u_color - 1.0) <= 0.01) {
@@ -103,6 +105,7 @@ void main() {
     // todo: Iso value slider? (done, kinda)
     // todo: Clean this up? (Is this even the right approach?)
     if (textureVal > u_isoValue) {
+      // calculate normal at point by central differences method
       float gxLess = texture(u_volume, vec3(p.x - rayDir.x * u_dt, p.y, p.z)).r;
       float gxMore = texture(u_volume, vec3(p.x + rayDir.x * u_dt, p.y, p.z)).r;
       float dgx = gxMore - gxLess;
@@ -116,11 +119,19 @@ void main() {
       float dgz = gzMore - gzLess;
       vec3 n = normalize(vec3(dgx, dgy, dgz));
 
+      // calculate diffuse lighting
       vec3 lightSource = vec3(1.0);
       vec3 lightDir = normalize(lightSource);
       float diffuseStrength = max(dot(n, lightDir), 0.0);
 
-      color.rgb = diffuseStrength * val_color.rgb;
+      // calculate specular lighting
+      vec3 viewSource = normalize(rayOrigin);
+      vec3 reflectSource = normalize(reflect(-lightSource, n));
+      float specularStrength = max(0.0, dot(viewSource, reflectSource));
+      specularStrength = pow(specularStrength, 64.0);
+
+      // add lighting
+      color.rgb = diffuseStrength * val_color.rgb + specularStrength * val_color.rgb;
       color.rgb *= val_color.rgb;
       color.a = 0.8;
       break;
