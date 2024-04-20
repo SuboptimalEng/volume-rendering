@@ -2,7 +2,7 @@
 
 ## Description
 
-Volume rendering is a common technique used to render 3D medical imaging data such as MRIs or CT scans. This repo contains my implementation of the algorithm Three.js and React.
+Volume rendering is a common technique used to render 3D medical imaging data such as MRIs or CT scans. This repo contains my implementation of the algorithm in Three.js and React.
 
 ## Demo
 
