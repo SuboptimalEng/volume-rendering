@@ -9,6 +9,7 @@ const handleVolumeFileUpload = (event: any, dim: number, setDataFn: any) => {
   const reader = new FileReader();
   reader.onload = (e: any) => {
     const arrayBuffer = e.target.result;
+
     const uint8Array = new Uint8Array(arrayBuffer);
     // Assuming the raw file contains 256x256x256 uint8 values
     const data = new Uint8Array(dim * dim * dim);
