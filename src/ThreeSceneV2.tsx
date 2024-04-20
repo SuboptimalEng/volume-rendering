@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as Three from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
@@ -12,13 +12,6 @@ const generateCube = (p: Three.Vector3 = new Three.Vector3(0, 0, 0)) => {
 
 export const ThreeSceneV2 = () => {
   const canvasRef = useRef(null);
-  let myCamera: Three.PerspectiveCamera;
-
-  const uniformData: {
-    cameraPos: Three.Vector3;
-  } = {
-    cameraPos: new Three.Vector3(0, 0, 0),
-  };
 
   useEffect(() => {
     if (canvasRef.current === null) {
@@ -30,7 +23,7 @@ export const ThreeSceneV2 = () => {
     const renderer = new Three.WebGLRenderer({ canvas: canvasRef.current });
     renderer.setSize(width, height);
 
-    myCamera = new Three.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const myCamera = new Three.PerspectiveCamera(75, width / height, 0.1, 1000);
     myCamera.position.set(0, 0, -5);
     myCamera.lookAt(new Three.Vector3(0, 0, 0));
     myCamera.up.set(0, 1, 0);
@@ -160,10 +153,6 @@ export const ThreeSceneV2 = () => {
     const animate = () => {
       controls.update();
       renderer.render(scene, myCamera);
-
-      // uniformData.cameraPos = myCamera.position;
-      // console.log(uniformData.cameraPos);
-
       requestAnimationFrame(animate);
     };
     animate();
