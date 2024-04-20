@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-But wait, there's more! After running these commands, you will be able to open the project in localhost. However, there will be no image rendered on screen! Why, you may ask? Simple, I did not want to upload multiple 16MB data files to GitHub. To see the demo in action, you will need to download one of these files and upload them via the UI.
+But wait, there's more! After running these commands, you will be able to open the project in localhost. However, there will be no image rendered on screen. Why, you may ask? Simple, I did not want to upload multiple 16MB data files to GitHub. To see the demo in action, you will need to download one of these files and upload them via the UI.
 
 - Foot - https://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw
 - Skull - https://klacansky.com/open-scivis-datasets/skull/skull_256x256x256_uint8.raw
