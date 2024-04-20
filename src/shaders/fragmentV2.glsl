@@ -74,6 +74,7 @@ void main() {
   vec4 c = vec4(0.0);
 
   // TODO: Add blinn-phong lighting?
+  // TODO: Iso value slider?
   // vec3 lightSource = vec3(1.0, 1.0, 1.0);
 
   vec3 p = rayOrigin + t_hit.x * rayDir;
@@ -89,13 +90,6 @@ void main() {
     } else {
       val_color = vec4(palette(val), val * 0.1);
     }
-
-    // val_color = vec4(palette(val), val * 0.1);
-    // vec4 val_color = vec4(palette(val), val * 0.1);
-    // vec4 val_color = vec4(palette(val + sin(u_time)), val * 0.1);
-
-    // val_color = vec4(1.0, 0.0, 0.0, val);
-    // c.r += val;
 
     // Step 4.2: Accumulate the color and opacity using the front-to-back
     // compositing equation

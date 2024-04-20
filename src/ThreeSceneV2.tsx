@@ -23,7 +23,7 @@ const handleVolumeFileUpload = (event: any, dim: number, setDataFn: any) => {
   reader.readAsArrayBuffer(file);
 };
 
-const initData = (canvasRef: any) => {
+const initData = (canvasRef: any, volumeData: any, dim: number) => {
   const width = window.innerWidth;
   const height = window.innerHeight;
 
@@ -49,6 +49,17 @@ const initData = (canvasRef: any) => {
   folder.add(crossSectionSize, 'y', 0.02, 0.5, 0.02);
   folder.add(crossSectionSize, 'z', 0.02, 0.5, 0.02);
 
+  const volumeDataTexture = new Three.Data3DTexture(volumeData, dim, dim, dim);
+  volumeDataTexture.format = Three.RedFormat;
+  // volumeDataTexture.type = Three.UnsignedByteType;
+  volumeDataTexture.minFilter = Three.LinearFilter;
+  volumeDataTexture.magFilter = Three.LinearFilter;
+  // volumeDataTexture.wrapS = Three.RepeatWrapping;
+  volumeDataTexture.wrapT = Three.RepeatWrapping;
+  // volumeDataTexture.wrapR = Three.RepeatWrapping;
+  volumeDataTexture.needsUpdate = true;
+  console.log(volumeDataTexture);
+
   const uniforms = {
     u_camera: {
       value: camera.position,
@@ -67,6 +78,9 @@ const initData = (canvasRef: any) => {
     },
     u_color: {
       value: 1,
+    },
+    u_volume: {
+      value: volumeDataTexture,
     },
   };
 
@@ -102,35 +116,15 @@ export const ThreeSceneV2 = () => {
       return;
     }
 
-    const volumeDataTexture = new Three.Data3DTexture(
-      volumeData,
-      dim,
-      dim,
-      dim,
-    );
-    volumeDataTexture.format = Three.RedFormat;
-    // volumeDataTexture.type = Three.UnsignedByteType;
-    volumeDataTexture.minFilter = Three.LinearFilter;
-    volumeDataTexture.magFilter = Three.LinearFilter;
-    // volumeDataTexture.wrapS = Three.RepeatWrapping;
-    volumeDataTexture.wrapT = Three.RepeatWrapping;
-    // volumeDataTexture.wrapR = Three.RepeatWrapping;
-    volumeDataTexture.needsUpdate = true;
-    console.log(volumeDataTexture);
-
+    // TODO: I should clean this up...
     const { camera, stats, clock, uniforms, gui, renderer, scene, controls } =
-      initData(canvasRef); // TODO: I should clean this up...
+      initData(canvasRef, volumeData, dim);
 
     // Note: Plane works, but looks very weird...
     // const geo1 = new Three.PlaneGeometry(2, 2, 2);
     const geo1 = new Three.BoxGeometry(2, 2, 2);
     const mat1 = new Three.ShaderMaterial({
-      uniforms: {
-        u_volume: {
-          value: volumeDataTexture,
-        },
-        ...uniforms,
-      },
+      uniforms: { ...uniforms },
       vertexShader: vertexV2,
       fragmentShader: fragmentV2,
     });
