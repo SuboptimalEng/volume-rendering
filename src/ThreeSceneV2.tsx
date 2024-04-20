@@ -41,10 +41,10 @@ const initData = (canvasRef: any) => {
 
   const gui = new GUI();
   const crossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
-  const folder = gui.addFolder('Cross Section Size');
-  folder.add(crossSectionSize, 'x', 0, 0.5);
-  folder.add(crossSectionSize, 'y', 0, 0.5);
-  folder.add(crossSectionSize, 'z', 0, 0.5);
+  const folder = gui.addFolder('Display Settings');
+  folder.add(crossSectionSize, 'x', 0.02, 0.5, 0.02);
+  folder.add(crossSectionSize, 'y', 0.02, 0.5, 0.02);
+  folder.add(crossSectionSize, 'z', 0.02, 0.5, 0.02);
 
   const uniforms = {
     u_camera: {
@@ -62,9 +62,13 @@ const initData = (canvasRef: any) => {
     u_crossSectionSize: {
       value: crossSectionSize,
     },
+    u_color: {
+      value: 1,
+    },
   };
 
-  folder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002);
+  folder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002).name('step size');
+  folder.add(uniforms.u_color, 'value', 1, 3, 1).name('color');
   folder.open();
 
   return {
@@ -165,18 +169,19 @@ export const ThreeSceneV2 = () => {
       uniform vec3 u_crossSectionSize;
       uniform float u_dt;
       uniform float u_time;
+      uniform float u_color;
 
       // Inigo Quilez - https://iquilezles.org/articles/palettes/
       vec3 palette(in float t) {
-        // vec3 a = vec3(0.5, 0.5, 0.5);
-        // vec3 b = vec3(0.5, 0.5, 0.5);
-        // vec3 c = vec3(1.0, 1.0, 1.0);
-        // vec3 d = vec3(0.00, 0.33, 0.67);
+        vec3 a = vec3(0.5, 0.5, 0.5);
+        vec3 b = vec3(0.5, 0.5, 0.5);
+        vec3 c = vec3(1.0, 1.0, 1.0);
+        vec3 d = vec3(0.00, 0.33, 0.67);
 
-        vec3 a = vec3(0.8, 0.5, 0.4);
-        vec3 b = vec3(0.2, 0.4, 0.2);
-        vec3 c = vec3(2.0, 1.0, 1.0);
-        vec3 d = vec3(0.00, 0.25, 0.25);
+        // vec3 a = vec3(0.8, 0.5, 0.4);
+        // vec3 b = vec3(0.2, 0.4, 0.2);
+        // vec3 c = vec3(2.0, 1.0, 1.0);
+        // vec3 d = vec3(0.00, 0.25, 0.25);
 
         return a + b*cos( 6.28318*(c*t+d) );
       }
@@ -243,8 +248,17 @@ export const ThreeSceneV2 = () => {
           // float val = texture(u_volume, vec3(0.4, 0.2, 0.4)).r;
           float val = texture(u_volume, p + 0.5).r;
 
-          // vec4 val_color = vec4(1.0, 1.0, 1.0, val * 0.1);
-          vec4 val_color = vec4(palette(val), val * 0.1);
+          vec4 val_color = vec4(0.0);
+          if (abs(u_color - 1.0) <= 0.01) {
+            val_color = vec4(1.0, 1.0, 1.0, val * 0.1);
+          } else if (abs(u_color - 2.0) <= 0.01) {
+            val_color = vec4(1.0, 0.0, 0.0, val * 0.1);
+          } else {
+            val_color = vec4(palette(val), val * 0.1);
+          }
+
+          // val_color = vec4(palette(val), val * 0.1);
+          // vec4 val_color = vec4(palette(val), val * 0.1);
           // vec4 val_color = vec4(palette(val + sin(u_time)), val * 0.1);
 
           // val_color = vec4(1.0, 0.0, 0.0, val);
@@ -293,10 +307,12 @@ export const ThreeSceneV2 = () => {
 
   return (
     <>
-      <input
-        type="file"
-        onChange={(e) => handleVolumeFileUpload(e, dim, setVolumeData)}
-      />
+      <div className="absolute top-24">
+        <input
+          type="file"
+          onChange={(e) => handleVolumeFileUpload(e, dim, setVolumeData)}
+        />
+      </div>
       <canvas ref={canvasRef}></canvas>
     </>
   );
