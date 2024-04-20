@@ -10,7 +10,7 @@ Volume rendering is a common technique used to render 3D medical imaging data su
 
 ```
 git clone https://github.com/SuboptimalEng/volume-rendering.git
-cd volume-rendering
+cd volume-rendering/
 npm install
 npm run dev
 ```
