@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Three from 'three';
+import { GUI } from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/addons/libs/stats.module.js';
-import { GUI } from 'dat.gui';
-import vertexV2 from './shaders/vertexV2.glsl';
-import fragmentV2 from './shaders/fragmentV2.glsl';
+import vertexV2 from './shaders/vertexV2.glsl?raw';
+import fragmentV2 from './shaders/fragmentV2.glsl?raw';
 
 const handleVolumeFileUpload = (event: any, dim: number, setDataFn: any) => {
   const file = event.target.files[0];
