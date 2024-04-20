@@ -8,6 +8,7 @@ uniform vec3 u_crossSectionSize;
 uniform float u_dt;
 uniform float u_time;
 uniform float u_color;
+uniform float u_isoValue;
 
 // Inigo Quilez - https://iquilezles.org/articles/palettes/
 vec3 palette(in float t) {
@@ -73,28 +74,57 @@ void main() {
   vec4 color = vec4(0.0);
   vec4 c = vec4(0.0);
 
-  // TODO: Add blinn-phong lighting?
-  // TODO: Iso value slider?
-  // vec3 lightSource = vec3(1.0, 1.0, 1.0);
-
-  vec3 p = rayOrigin + t_hit.x * rayDir;
+  // note: 0.5 offset centers on cube
+  vec3 p = rayOrigin + t_hit.x * rayDir + 0.5;
   for (float t = t_hit.x; t < t_hit.y; t += dt) {
     // float val = texture(u_volume, vec3(0.4, 0.2, 0.4)).r;
-    float val = texture(u_volume, p + 0.5).r;
+    // note: 0.5 offset centers on cube
+    float textureVal = texture(u_volume, p).r;
 
     vec4 val_color = vec4(0.0);
+    float val_color_alpha = textureVal * 0.1;
+    // looks nicer with this alpha
+    val_color_alpha = smoothstep(0.0, 0.25, textureVal * 0.1);
+
     if (abs(u_color - 1.0) <= 0.01) {
-      val_color = vec4(1.0, 1.0, 1.0, val * 0.1);
+      val_color = vec4(1.0, 1.0, 1.0, val_color_alpha);
     } else if (abs(u_color - 2.0) <= 0.01) {
-      val_color = vec4(1.0, 0.0, 0.0, val * 0.1);
+      val_color = vec4(1.0, 0.0, 0.0, val_color_alpha);
     } else {
-      val_color = vec4(palette(val), val * 0.1);
+      val_color = vec4(palette(textureVal), val_color_alpha);
     }
 
     // Step 4.2: Accumulate the color and opacity using the front-to-back
     // compositing equation
     color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
     color.a += (1.0 - color.a) * val_color.a;
+
+    // todo: Add blinn-phong lighting? (done, kinda)
+    // todo: Iso value slider? (done, kinda)
+    // todo: Clean this up? (Is this even the right approach?)
+    if (textureVal > u_isoValue) {
+      float gxLess = texture(u_volume, vec3(p.x - rayDir.x * u_dt, p.y, p.z)).r;
+      float gxMore = texture(u_volume, vec3(p.x + rayDir.x * u_dt, p.y, p.z)).r;
+      float dgx = gxMore - gxLess;
+
+      float gyLess = texture(u_volume, vec3(p.x, p.y - rayDir.y * u_dt, p.z)).r;
+      float gyMore = texture(u_volume, vec3(p.x, p.y + rayDir.y * u_dt, p.z)).r;
+      float dgy = gyMore - gyLess;
+
+      float gzLess = texture(u_volume, vec3(p.x, p.y, p.z - rayDir.z * u_dt)).r;
+      float gzMore = texture(u_volume, vec3(p.x, p.y, p.z + rayDir.z * u_dt)).r;
+      float dgz = gzMore - gzLess;
+      vec3 n = normalize(vec3(dgx, dgy, dgz));
+
+      vec3 lightSource = vec3(1.0);
+      vec3 lightDir = normalize(lightSource);
+      float diffuseStrength = max(dot(n, lightDir), 0.0);
+
+      color.rgb = diffuseStrength * val_color.rgb;
+      color.rgb *= val_color.rgb;
+      color.a = 0.8;
+      break;
+    }
 
     // Optimization: break out of the loop when the color is near opaque
     if (color.a >= 0.95) {

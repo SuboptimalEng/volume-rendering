@@ -33,7 +33,6 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
   camera.up.set(0, 1, 0);
 
   const renderer = new Three.WebGLRenderer({ canvas: canvasRef.current });
-  const scene = new Three.Scene();
   const stats = new Stats();
   const clock = new Three.Clock();
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -82,10 +81,14 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     u_volume: {
       value: volumeDataTexture,
     },
+    u_isoValue: {
+      value: 1,
+    },
   };
 
   folder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002).name('step size');
   folder.add(uniforms.u_color, 'value', 1, 3, 1).name('color');
+  folder.add(uniforms.u_isoValue, 'value', 0, 1, 0.04).name('iso value');
   folder.open();
 
   return {
@@ -95,7 +98,6 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     uniforms,
     gui,
     renderer,
-    scene,
     controls,
   };
 };
@@ -116,26 +118,22 @@ export const ThreeSceneV2 = () => {
       return;
     }
 
-    // TODO: I should clean this up...
-    const { camera, stats, clock, uniforms, gui, renderer, scene, controls } =
+    // todo: I should clean this up...
+    const { camera, stats, clock, uniforms, gui, renderer, controls } =
       initData(canvasRef, volumeData, dim);
 
     // Note: Plane works, but looks very weird...
     // const geo1 = new Three.PlaneGeometry(2, 2, 2);
+    const scene = new Three.Scene();
     const geo1 = new Three.BoxGeometry(2, 2, 2);
     const mat1 = new Three.ShaderMaterial({
       uniforms: { ...uniforms },
       vertexShader: vertexV2,
       fragmentShader: fragmentV2,
     });
-    const m1 = new Three.Mesh(geo1, mat1);
-    // Changing this position will change world space coords of the mesh.
-    // Since transform camera coordinates to object space, this will
-    // also work on the ray march. Same for rotataion + scale.
-    // m1.position.x = 2;
-    // m1.rotation.x = 10;
-    // m1.scale.x = 2;
-    scene.add(m1);
+    const mesh1 = new Three.Mesh(geo1, mat1);
+    scene.add(mesh1);
+    // console.log(scene);
 
     const animate = () => {
       controls.update();
@@ -148,13 +146,15 @@ export const ThreeSceneV2 = () => {
     animate();
 
     return () => {
+      document.body.removeChild(stats.dom);
+      stats.end();
       gui.destroy();
     };
   }, [volumeData]);
 
   return (
     <>
-      <div className="absolute top-24">
+      <div className="absolute top-16">
         <input
           type="file"
           onChange={(e) => handleVolumeFileUpload(e, dim, setVolumeData)}
