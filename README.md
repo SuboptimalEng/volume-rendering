@@ -2,7 +2,7 @@
 
 ## Description
 
-Volume rendering is a common technique used to render 3D medical imaging data such as MRIs or CT scans. This repo contains my implementation of the algorithm in Three.js and React.
+Volume rendering is a common technique used to render 3D medical imaging data such as MRIs or CT scans. This repo contains my implementation of the algorithm in Three.js, GLSL, and React.
 
 ## Demo
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-But wait, there's more! After running this command, you will be able to open the project in localhost. However, there will be no image rendered on screen! Why? I did not want to upload multiple 16MB raw files to this repo. You will need to download one of these models and upload them to the app to get started.
+But wait, there's more! After running these commands, you will be able to open the project in localhost. However, there will be no image rendered on screen! Why, you may ask? Simple, I did not want to upload multiple 16MB data files to GitHub. To see the demo in action, you will need to download one of these files and upload them via the UI.
 
 - Foot - https://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw
 - Skull - https://klacansky.com/open-scivis-datasets/skull/skull_256x256x256_uint8.raw
