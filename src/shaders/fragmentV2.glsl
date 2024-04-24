@@ -26,6 +26,7 @@ varying vec3 v_cameraObjectSpace;
 
 // Will Usher - https://www.willusher.io/webgl/2019/01/13/volume-rendering-with-webgl
 vec2 intersect_box(vec3 orig, vec3 dir) {
+  // note: used this for testing purposes
   // const float halfBoxSize = 0.5;
   // const vec3 box_min = vec3(-halfBoxSize);
   // const vec3 box_max = vec3(halfBoxSize);
@@ -133,7 +134,7 @@ void main() {
       // add lighting
       color.rgb = diffuseStrength * val_color.rgb + specularStrength * val_color.rgb;
       color.rgb *= val_color.rgb;
-      color.a = 0.8;
+      color.a = 0.95;
       break;
     }
 
