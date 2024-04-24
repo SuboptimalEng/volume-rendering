@@ -1,6 +1,6 @@
 # 🌊 Volume Rendering
 
-Volume rendering is a common technique used to render 3D medical imaging data such as MRIs or CT scans. This repo contains the code for my implementation in Three.js, GLSL, and React. Here's a 30 second demo on [Twitter](https://x.com/SuboptimalEng/status/1781808470985003035) and [Reddit](https://www.reddit.com/r/GraphicsProgramming/comments/1c9ke0p/volume_rendering_in_threejs_and_glsl/).
+Volume rendering is a common technique used to render 3D medical imaging data, such as MRIs or CT scans. This repo contains the code for my implementation in Three.js, GLSL, and React. Here's a 30 second demo on [Twitter](https://x.com/SuboptimalEng/status/1781808470985003035) and [Reddit](https://www.reddit.com/r/GraphicsProgramming/comments/1c9ke0p/volume_rendering_in_threejs_and_glsl/).
 
 Huge thanks to Will Usher for his blog post on [Volume Rendering in WebGL](https://www.willusher.io/webgl/2019/01/13/volume-rendering-with-webgl).
 
