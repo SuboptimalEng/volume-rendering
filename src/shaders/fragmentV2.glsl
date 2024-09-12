@@ -4,7 +4,8 @@ precision mediump float;
 uniform vec3 u_camera;
 uniform vec3 u_resolution;
 uniform mediump sampler3D u_volume;
-uniform vec3 u_crossSectionSize;
+uniform vec3 u_leftCrossSectionSize;
+uniform vec3 u_rightCrossSectionSize;
 uniform float u_dt;
 uniform float u_time;
 uniform float u_color;
@@ -31,8 +32,8 @@ vec2 intersect_box(vec3 orig, vec3 dir) {
   // const vec3 box_min = vec3(-halfBoxSize);
   // const vec3 box_max = vec3(halfBoxSize);
 
-  vec3 box_min = vec3(-u_crossSectionSize);
-  vec3 box_max = vec3(u_crossSectionSize);
+  vec3 box_min = vec3(-u_leftCrossSectionSize);
+  vec3 box_max = vec3(u_rightCrossSectionSize);
   vec3 inv_dir = 1.0 / dir;
   vec3 tmin_tmp = (box_min - orig) * inv_dir;
   vec3 tmax_tmp = (box_max - orig) * inv_dir;

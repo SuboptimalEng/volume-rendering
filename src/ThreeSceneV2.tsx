@@ -42,11 +42,19 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
   document.body.appendChild(stats.dom);
 
   const gui = new GUI();
-  const crossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
   const folder = gui.addFolder('Display Settings');
-  folder.add(crossSectionSize, 'x', 0.02, 0.5, 0.02);
-  folder.add(crossSectionSize, 'y', 0.02, 0.5, 0.02);
-  folder.add(crossSectionSize, 'z', 0.02, 0.5, 0.02);
+  folder.open();
+
+  const crossFolder = folder.addFolder('Cross Section Settings');
+  const leftCrossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
+  crossFolder.add(leftCrossSectionSize, 'x', 0.02, 0.5, 0.02).name('Left');
+  crossFolder.add(leftCrossSectionSize, 'y', 0.02, 0.5, 0.02).name('Down');
+  crossFolder.add(leftCrossSectionSize, 'z', 0.02, 0.5, 0.02).name('Back');
+  const rightCrossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
+  crossFolder.add(rightCrossSectionSize, 'x', 0.02, 0.5, 0.02).name('Right');
+  crossFolder.add(rightCrossSectionSize, 'y', 0.02, 0.5, 0.02).name('Up');
+  crossFolder.add(rightCrossSectionSize, 'z', 0.02, 0.5, 0.02).name('Forward');
+  crossFolder.open();
 
   const volumeDataTexture = new Three.Data3DTexture(volumeData, dim, dim, dim);
   volumeDataTexture.format = Three.RedFormat;
@@ -72,8 +80,11 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     u_time: {
       value: 0.0,
     },
-    u_crossSectionSize: {
-      value: crossSectionSize,
+    u_leftCrossSectionSize: {
+      value: leftCrossSectionSize,
+    },
+    u_rightCrossSectionSize: {
+      value: rightCrossSectionSize,
     },
     u_color: {
       value: 1,
@@ -86,10 +97,11 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     },
   };
 
-  folder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002).name('step size');
-  folder.add(uniforms.u_color, 'value', 1, 3, 1).name('color');
-  folder.add(uniforms.u_isoValue, 'value', 0, 1, 0.04).name('iso value');
-  folder.open();
+  const algoFolder = folder.addFolder('Algorithm Settings');
+  algoFolder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002).name('step size');
+  algoFolder.add(uniforms.u_color, 'value', 1, 3, 1).name('color');
+  algoFolder.add(uniforms.u_isoValue, 'value', 0, 1, 0.04).name('iso value');
+  algoFolder.open();
 
   return {
     camera,
