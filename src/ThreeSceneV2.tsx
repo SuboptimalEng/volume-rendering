@@ -144,6 +144,7 @@ export const ThreeSceneV2 = () => {
       fragmentShader: fragmentV2,
     });
     const mesh1 = new Three.Mesh(geo1, mat1);
+    mesh1.rotateY(Math.PI);
     scene.add(mesh1);
     // console.log(scene);
 
