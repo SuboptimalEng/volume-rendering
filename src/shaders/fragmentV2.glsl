@@ -4,12 +4,12 @@ precision mediump float;
 uniform vec3 u_camera;
 uniform vec3 u_resolution;
 uniform mediump sampler3D u_volume;
-uniform vec3 u_leftCrossSectionSize;
-uniform vec3 u_rightCrossSectionSize;
+uniform vec3 u_crossSectionSize;
 uniform float u_dt;
 uniform float u_time;
 uniform float u_color;
 uniform float u_isoValue;
+uniform float u_alphaVal;
 
 // Inigo Quilez - https://iquilezles.org/articles/palettes/
 vec3 palette(in float t) {
@@ -32,8 +32,8 @@ vec2 intersect_box(vec3 orig, vec3 dir) {
   // const vec3 box_min = vec3(-halfBoxSize);
   // const vec3 box_max = vec3(halfBoxSize);
 
-  vec3 box_min = vec3(-u_leftCrossSectionSize);
-  vec3 box_max = vec3(u_rightCrossSectionSize);
+  vec3 box_min = vec3(-u_crossSectionSize);
+  vec3 box_max = vec3(u_crossSectionSize);
   vec3 inv_dir = 1.0 / dir;
   vec3 tmin_tmp = (box_min - orig) * inv_dir;
   vec3 tmax_tmp = (box_max - orig) * inv_dir;
@@ -88,12 +88,15 @@ void main() {
     float val_color_alpha = textureVal * 0.1;
 
     // looks a little nicer when using this alpha
-    val_color_alpha = smoothstep(0.0, 0.25, textureVal * 0.1);
+    // val_color_alpha = smoothstep(0.0, 0.25, textureVal * 0.1);
+
+    // looks even nicer
+    val_color_alpha = smoothstep(0.0, u_alphaVal, val_color_alpha);
 
     if (abs(u_color - 1.0) <= 0.01) {
-      val_color = vec4(1.0, 1.0, 1.0, val_color_alpha);
-    } else if (abs(u_color - 2.0) <= 0.01) {
-      val_color = vec4(1.0, 0.0, 0.0, val_color_alpha);
+      vec3 red = vec3(1.0, 0.0, 0.0);
+      vec3 white = vec3(1.0);
+      val_color = vec4(mix(red, white, val_color_alpha), val_color_alpha);
     } else {
       val_color = vec4(palette(textureVal), val_color_alpha);
     }

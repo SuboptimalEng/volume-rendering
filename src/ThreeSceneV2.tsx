@@ -5,6 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/addons/libs/stats.module.js';
 import vertexV2 from './shaders/vertexV2.glsl?raw';
 import fragmentV2 from './shaders/fragmentV2.glsl?raw';
+import TWEEN from '@tweenjs/tween.js';
 
 const handleVolumeFileUpload = (event: any, dim: number, setDataFn: any) => {
   const file = event.target.files[0];
@@ -46,14 +47,16 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
   folder.open();
 
   const crossFolder = folder.addFolder('Cross Section Settings');
-  const leftCrossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
-  crossFolder.add(leftCrossSectionSize, 'x', 0.02, 0.5, 0.02).name('Left');
-  crossFolder.add(leftCrossSectionSize, 'y', 0.02, 0.5, 0.02).name('Down');
-  crossFolder.add(leftCrossSectionSize, 'z', 0.02, 0.5, 0.02).name('Back');
-  const rightCrossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
-  crossFolder.add(rightCrossSectionSize, 'x', 0.02, 0.5, 0.02).name('Right');
-  crossFolder.add(rightCrossSectionSize, 'y', 0.02, 0.5, 0.02).name('Up');
-  crossFolder.add(rightCrossSectionSize, 'z', 0.02, 0.5, 0.02).name('Forward');
+  const crossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
+  crossFolder.add(crossSectionSize, 'x', 0.02, 0.5, 0.02);
+  const crossSectionYSetting = crossFolder.add(
+    crossSectionSize,
+    'y',
+    0.02,
+    0.5,
+    0.02,
+  );
+  crossFolder.add(crossSectionSize, 'z', 0.02, 0.5, 0.02);
   crossFolder.open();
 
   const volumeDataTexture = new Three.Data3DTexture(volumeData, dim, dim, dim);
@@ -80,14 +83,11 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     u_time: {
       value: 0.0,
     },
-    u_leftCrossSectionSize: {
-      value: leftCrossSectionSize,
-    },
-    u_rightCrossSectionSize: {
-      value: rightCrossSectionSize,
+    u_crossSectionSize: {
+      value: crossSectionSize,
     },
     u_color: {
-      value: 1,
+      value: 2,
     },
     u_volume: {
       value: volumeDataTexture,
@@ -95,11 +95,17 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     u_isoValue: {
       value: 1,
     },
+    u_alphaVal: {
+      value: 0.2,
+    },
   };
 
   const algoFolder = folder.addFolder('Algorithm Settings');
   algoFolder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002).name('step size');
-  algoFolder.add(uniforms.u_color, 'value', 1, 3, 1).name('color');
+  algoFolder.add(uniforms.u_color, 'value', 1, 2, 1).name('color');
+  const alphaSetting = algoFolder
+    .add(uniforms.u_alphaVal, 'value', 0.01, 0.4, 0.01)
+    .name('alpha val');
   algoFolder.add(uniforms.u_isoValue, 'value', 0, 1, 0.04).name('iso value');
   algoFolder.open();
 
@@ -111,6 +117,8 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     gui,
     renderer,
     controls,
+    crossSectionYSetting,
+    alphaSetting,
   };
 };
 
@@ -118,6 +126,9 @@ export const ThreeSceneV2 = () => {
   const dim = 256;
   const canvasRef = useRef(null);
   const [volumeData, setVolumeData] = useState<Uint8Array | null>(null);
+
+  let prevChapterAnimation = () => {};
+  let nextChapterAnimation = () => {};
 
   useEffect(() => {
     if (canvasRef.current === null) {
@@ -131,8 +142,17 @@ export const ThreeSceneV2 = () => {
     }
 
     // todo: I should clean this up...
-    const { camera, stats, clock, uniforms, gui, renderer, controls } =
-      initData(canvasRef, volumeData, dim);
+    const {
+      camera,
+      stats,
+      clock,
+      uniforms,
+      gui,
+      renderer,
+      controls,
+      crossSectionYSetting,
+      alphaSetting,
+    } = initData(canvasRef, volumeData, dim);
 
     // Note: Plane works, but looks very weird...
     // const geo1 = new Three.PlaneGeometry(2, 2, 2);
@@ -144,11 +164,46 @@ export const ThreeSceneV2 = () => {
       fragmentShader: fragmentV2,
     });
     const mesh1 = new Three.Mesh(geo1, mat1);
-    mesh1.rotateY(Math.PI);
+    mesh1.rotateY(Math.PI / 2);
     scene.add(mesh1);
-    // console.log(scene);
+
+    const prev = { y: 0.5, alphaVal: 0.2, rotX: 0 };
+    const next = { y: 0.1, alphaVal: 0.04, rotX: Math.PI / 180 };
+
+    const forwardTween = new TWEEN.Tween({ ...prev })
+      .to(next, 2000)
+      .onUpdate((obj) => {
+        uniforms.u_crossSectionSize.value.y = obj.y;
+        crossSectionYSetting.setValue(obj.y);
+
+        uniforms.u_alphaVal.value = obj.alphaVal;
+        alphaSetting.setValue(obj.alphaVal);
+
+        mesh1.rotateX(obj.rotX);
+      });
+    const backwardTween = new TWEEN.Tween({ ...next })
+      .to(prev, 2000)
+      .onUpdate((obj) => {
+        uniforms.u_crossSectionSize.value.y = obj.y;
+        crossSectionYSetting.setValue(obj.y);
+
+        uniforms.u_alphaVal.value = obj.alphaVal;
+        alphaSetting.setValue(obj.alphaVal);
+
+        mesh1.rotateX(-obj.rotX);
+      });
+
+    nextChapterAnimation = () => {
+      forwardTween.start();
+    };
+
+    prevChapterAnimation = () => {
+      backwardTween.start();
+    };
 
     const animate = () => {
+      forwardTween.update();
+      backwardTween.update();
       controls.update();
       stats.update();
       renderer.render(scene, camera);
@@ -172,6 +227,14 @@ export const ThreeSceneV2 = () => {
           type="file"
           onChange={(e) => handleVolumeFileUpload(e, dim, setVolumeData)}
         />
+        <div className="flex space-x-4">
+          <div className="border" onClick={() => prevChapterAnimation()}>
+            Previous Chapter
+          </div>
+          <div className="border" onClick={() => nextChapterAnimation()}>
+            Next Chapter
+          </div>
+        </div>
       </div>
       <canvas ref={canvasRef}></canvas>
     </>
