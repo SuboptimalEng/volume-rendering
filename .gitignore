@@ -131,3 +131,6 @@ dist
 
 # MacOS
 .DS_Store
+
+# 3D models
+models
