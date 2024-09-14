@@ -48,13 +48,7 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
   const crossFolder = folder.addFolder('Cross Section Settings');
   const crossSectionSize = new Three.Vector3(0.5, 0.5, 0.5);
   crossFolder.add(crossSectionSize, 'x', 0.02, 0.5, 0.02);
-  const crossSectionYSetting = crossFolder.add(
-    crossSectionSize,
-    'y',
-    0.02,
-    0.5,
-    0.02,
-  );
+  crossFolder.add(crossSectionSize, 'y', 0.02, 0.5, 0.02);
   crossFolder.add(crossSectionSize, 'z', 0.02, 0.5, 0.02);
   crossFolder.open();
 
@@ -116,7 +110,6 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
     gui,
     renderer,
     controls,
-    crossSectionYSetting,
     alphaSetting,
   };
 };
@@ -138,17 +131,8 @@ export const ThreeSceneV2 = () => {
     }
 
     // todo: I should clean this up...
-    const {
-      camera,
-      stats,
-      clock,
-      uniforms,
-      gui,
-      renderer,
-      controls,
-      crossSectionYSetting,
-      alphaSetting,
-    } = initData(canvasRef, volumeData, dim);
+    const { camera, stats, clock, uniforms, gui, renderer, controls } =
+      initData(canvasRef, volumeData, dim);
 
     // Note: Plane works, but looks very weird...
     // const geo1 = new Three.PlaneGeometry(2, 2, 2);
