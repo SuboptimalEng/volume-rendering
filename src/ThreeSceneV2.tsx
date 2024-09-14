@@ -5,7 +5,6 @@ import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/addons/libs/stats.module.js';
 import vertexV2 from './shaders/vertexV2.glsl?raw';
 import fragmentV2 from './shaders/fragmentV2.glsl?raw';
-import TWEEN from '@tweenjs/tween.js';
 
 const handleVolumeFileUpload = (event: any, dim: number, setDataFn: any) => {
   const file = event.target.files[0];
@@ -87,7 +86,7 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
       value: crossSectionSize,
     },
     u_color: {
-      value: 2,
+      value: 1,
     },
     u_volume: {
       value: volumeDataTexture,
@@ -101,8 +100,8 @@ const initData = (canvasRef: any, volumeData: any, dim: number) => {
   };
 
   const algoFolder = folder.addFolder('Algorithm Settings');
-  algoFolder.add(uniforms.u_dt, 'value', 0.002, 0.04, 0.002).name('step size');
-  algoFolder.add(uniforms.u_color, 'value', 1, 2, 1).name('color');
+  algoFolder.add(uniforms.u_dt, 'value', 0.004, 0.016, 0.002).name('step size');
+  algoFolder.add(uniforms.u_color, 'value', 1, 3, 1).name('color');
   const alphaSetting = algoFolder
     .add(uniforms.u_alphaVal, 'value', 0.01, 0.4, 0.01)
     .name('alpha val');
@@ -126,9 +125,6 @@ export const ThreeSceneV2 = () => {
   const dim = 256;
   const canvasRef = useRef(null);
   const [volumeData, setVolumeData] = useState<Uint8Array | null>(null);
-
-  let prevChapterAnimation = () => {};
-  let nextChapterAnimation = () => {};
 
   useEffect(() => {
     if (canvasRef.current === null) {
@@ -167,43 +163,7 @@ export const ThreeSceneV2 = () => {
     mesh1.rotateY(Math.PI / 2);
     scene.add(mesh1);
 
-    const prev = { y: 0.5, alphaVal: 0.2, rotX: 0 };
-    const next = { y: 0.1, alphaVal: 0.04, rotX: Math.PI / 180 };
-
-    const forwardTween = new TWEEN.Tween({ ...prev })
-      .to(next, 2000)
-      .onUpdate((obj) => {
-        uniforms.u_crossSectionSize.value.y = obj.y;
-        crossSectionYSetting.setValue(obj.y);
-
-        uniforms.u_alphaVal.value = obj.alphaVal;
-        alphaSetting.setValue(obj.alphaVal);
-
-        mesh1.rotateX(obj.rotX);
-      });
-    const backwardTween = new TWEEN.Tween({ ...next })
-      .to(prev, 2000)
-      .onUpdate((obj) => {
-        uniforms.u_crossSectionSize.value.y = obj.y;
-        crossSectionYSetting.setValue(obj.y);
-
-        uniforms.u_alphaVal.value = obj.alphaVal;
-        alphaSetting.setValue(obj.alphaVal);
-
-        mesh1.rotateX(-obj.rotX);
-      });
-
-    nextChapterAnimation = () => {
-      forwardTween.start();
-    };
-
-    prevChapterAnimation = () => {
-      backwardTween.start();
-    };
-
     const animate = () => {
-      forwardTween.update();
-      backwardTween.update();
       controls.update();
       stats.update();
       renderer.render(scene, camera);
@@ -227,14 +187,6 @@ export const ThreeSceneV2 = () => {
           type="file"
           onChange={(e) => handleVolumeFileUpload(e, dim, setVolumeData)}
         />
-        <div className="flex space-x-4">
-          <div className="border" onClick={() => prevChapterAnimation()}>
-            Previous Chapter
-          </div>
-          <div className="border" onClick={() => nextChapterAnimation()}>
-            Next Chapter
-          </div>
-        </div>
       </div>
       <canvas ref={canvasRef}></canvas>
     </>

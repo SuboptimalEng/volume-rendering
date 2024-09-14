@@ -93,9 +93,11 @@ void main() {
     // looks even nicer
     val_color_alpha = smoothstep(0.0, u_alphaVal, val_color_alpha);
 
+    vec3 red = vec3(1.0, 0.0, 0.0);
+    vec3 white = vec3(1.0);
     if (abs(u_color - 1.0) <= 0.01) {
-      vec3 red = vec3(1.0, 0.0, 0.0);
-      vec3 white = vec3(1.0);
+      val_color = vec4(white, val_color_alpha);
+    } else if (abs(u_color - 2.0) <= 0.01) {
       val_color = vec4(mix(red, white, val_color_alpha), val_color_alpha);
     } else {
       val_color = vec4(palette(textureVal), val_color_alpha);
